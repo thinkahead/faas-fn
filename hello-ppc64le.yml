@@ -1,0 +1,10 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8081
+functions:
+  hello-ppc64le:
+    lang: python-ppc64le
+    handler: ./hello-ppc64le
+    image: docker.io/karve/hello-ppc64le:latest
+

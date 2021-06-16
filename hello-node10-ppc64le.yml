@@ -1,0 +1,10 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8081
+functions:
+  hello-node10-ppc64le:
+    lang: node10-express
+    handler: ./hello-node10-ppc64le
+    image: karve/hello-node10-ppc64le:latest
+
