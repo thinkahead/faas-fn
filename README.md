@@ -1,14 +1,14 @@
 # OpenFaas on ppc64le
 
-## Images used by deployments
+## Images used by openfaas install for ppc64le
 **alertmanager** image: prom/alertmanager-linux-ppc64le  
 **basic-auth-plugin** image: image-registry.openshift-image-registry.svc:5000/openfaas/basic-auth:latest-dev  
 **gateway** image: image-registry.openshift-image-registry.svc:5000/openfaas/gateway:latest-dev and image: image-registry.openshift-image-registry.svc:5000/openfaas/faas-netes:latest-dev  
 **nats** image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-streaming:latest-dev  
-**prometheus**  
+**prometheus** image: prom/prometheus-linux-ppc64le
 **queue-worker** image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-queue-worker:latest-dev  
 
-## Images for ppc64le
+## Building images for ppc64le
 ```
 git clone https://github.com/openfaas/faas.git
 cd faas
@@ -36,9 +36,10 @@ docker push default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/na
 docker build --build-arg http_proxy=http://10.3.0.3:3128 --build-arg https_proxy=http://10.3.0.3:3128 -t default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/nats-queue-worker:latest-dev .
 docker push default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/nats-queue-worker:latest-dev --tls-verify=false
 ```
-## Building faas-cli
+## Building faas-cli for ppc64le
 ```
 git clone https://github.com/openfaas/faas-cli.git
+cd faas-cli
 # change Dockerfile and optionally Dockerfile.redist
 -FROM teamserverless/license-check:0.3.9 as license-check
 +FROM teamserverless/license-check:latest-ppc64le as license-check
@@ -51,7 +52,7 @@ docker create --name faas-cli openfaas/faas-cli:latest-dev && docker cp faas-cli
 sudo mv faas-cli /usr/local/bin
 ```
 
-## arkade
+## Building arkade for ppc64le (Optional if you want to use helm)
 ```
 # modify Makefile under dist
 CGO_ENABLED=0 GOOS=linux GOARCH=ppc64le go build -ldflags $(LDFLAGS) -a -installsuffix cgo -o bin/arkade
@@ -59,20 +60,26 @@ make
 # Creates bin/arkade
 ```
 
-# watchdog used in Dockerfiles used by functions
+# Building watchdog for ppc64le used in Dockerfiles used by functions
+You can copy over the bin/fwatchdog-ppc64le into the template folder with teh Dockerfile for functions
 ```
 git clone https://github.com/openfaas/classic-watchdog.git
+cd classic-watchdog
 # modify Makefile under dist
 GOARCH=ppc64le CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags $(LDFLAGS) -installsuffix cgo -o bin/fwatchdog-ppc64le
 make
 ls bin/fwatchdog-ppc64le
+cd ..
 
 git clone https://github.com/openfaas/of-watchdog.git
+cd of-watchdog
 # modify Makefile under dist
 GOARCH=ppc64le CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -ldflags "-s -w -X main.Version=0.8.4-1-g989ac5f-dirty-1623851326 -X main.GitCommit=989ac5f0d2b4560d7b1d9f18d0231449527cc47c" -installsuffix cgo -o bin/fwatchdog-ppc64le
 make
 ls bin/fwatchdog-ppc64le
+cd ..
 ```
+
 ## Issues
 ### Tight container limits may cause "read init-p: connection reset by peer"
 This problem occurs on alertmanager. It is fixed by change memory to 250Mi and 500Mi in the alertmanager template.
@@ -87,10 +94,25 @@ oc secrets link openfaas-prometheus docker --for=pull -n openfaas
 oc secrets link openfaas-operator docker --for=pull -n openfaas
 oc secrets link openfaas-controller docker --for=pull -n openfaas
 ```
+### forbidden: cannot set blockOwnerDeletion if an ownerReference refers to a resource you can't set finalizers
+https://github.com/openfaas/faas-netes/issues/807
+It probably requires adding the rule with some specific resource/finalizer to openfaas-operator-rw role in openfaas-fn namespace or openfaas-operator-controller clusterrole. It works with the rule below added:
+```
+  - apiGroups:
+    - openfaas.com
+    resources:
+    - '*'
+    verbs:
+    - update
+```
+
+### Error in the name of component openfaas-operator
+component: openaas-operator should be changed to component: openfaas-operator in the template
+https://github.com/openfaas/faas-netes/blob/master/chart/openfaas/templates/operator-rbac.yaml#L113
 
 ## Installing openfaas
 ### Using arkade
-install-with-arkade.sh
+**install-with-arkade.sh**
 ```
 #!/bin/bash
 
@@ -120,6 +142,11 @@ oc secrets link openfaas-operator docker --for=pull -n openfaas
 oc secrets link openfaas-controller docker --for=pull -n openfaas
 oc secrets link default docker --for=pull -n openfaas
 ```
+**Installing**
+```
+chmod +x install-with-arcade.sh
+./install-with-arcade.sh
+```
 
 ### Using helm
 ```
@@ -132,7 +159,10 @@ kubectl get events -n openfaas-fn --sort-by=.metadata.creationTimestamp
 ```
 
 ## Uninstalling openfaas
+Use helm to delete openfaas for both above cases.
+```
 helm delete openfaas --namespace openfaas
+```
 
 ## Samples
 ### Figlet
