@@ -173,6 +173,7 @@ kubectl port-forward -n openfaas svc/gateway 8081:8080 &
 faas-cli deploy -f ./faas-figlet.yml
 faas-cli list --gateway http://localhost:8081
 curl http://localhost:8081/function/figlet -d Test
+echo Hi | faas-cli invoke figlet --gateway http://localhost:8081
 ```
 
 ### Hello Python
