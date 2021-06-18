@@ -11,7 +11,10 @@
 ## Dockerfile for nats-streaming-server using in next section
 Use the following docker/Dockerfile and docker/docker-entrypoint.sh https://github.com/nats-io/nats-streaming-docker/blob/master/0.22.0/alpine3.13/docker-entrypoint.sh
 ```
-FROM golang:1.16-alpine AS builder
+FROM --platform=${BUILDPLATFORM:-linux/ppc64le} golang:1.16-alpine AS builder
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
 
 RUN apk add --update git
 RUN apk add build-base
@@ -22,9 +25,9 @@ MAINTAINER Alexei Karve <karve@us.ibm.com>
 
 COPY . .
 
-RUN CGO_ENABLED=0 GO111MODULE=off go build -v -a -tags netgo -installsuffix netgo -ldflags "-s -w -X github.com/nats-io/nats-streaming-server/server.gitCommit=`git rev-parse --short HEAD`" -o /nats-streaming-server
+RUN CGO_ENABLED=0 GO111MODULE=off GOARCH=ppc64le go build -v -a -tags netgo -installsuffix netgo -ldflags "-s -w -X github.com/nats-io/nats-streaming-server/server.gitCommit=`git rev-parse --short HEAD`" -o /nats-streaming-server
 
-FROM alpine:latest
+FROM --platform=${TARGETPLATFORM:-linux/ppc64le} alpine:latest
 
 RUN apk add --update ca-certificates
 
@@ -56,8 +59,8 @@ docker push default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/fa
 # image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-streaming:latest-dev
 git clone https://github.com/nats-io/nats-streaming-server.git
 cd nats-streaming-server
-# Create docker/Dockerfile
-docker build --build-arg http_proxy=http://10.3.0.3:3128 --build-arg https_proxy=http://10.3.0.3:3128 -t default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/nats-streaming:latest-dev -f docker/Dockerfile .
+# Create docker/Dockerfile and docker/docker-entrypoint.sh as in previous section
+docker build --build-arg TARGETPLATFORM=linux/ppc64le --build-arg http_proxy=http://10.3.0.3:3128 --build-arg https_proxy=http://10.3.0.3:3128 -t default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/nats-streaming:latest-dev -f docker/Dockerfile .
 docker push default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/nats-streaming:latest-dev --tls-verify=false
 # image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-queue-worker:latest-dev
 # Comment out the following line in Dockerfile, it gives error on ppc64le because the /scratch-tmp is empty
