@@ -8,6 +8,34 @@
 **prometheus** image: prom/prometheus-linux-ppc64le
 **queue-worker** image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-queue-worker:latest-dev  
 
+## Dockerfile for nats-streaming-server using in next section
+Use the following docker/Dockerfile and docker/docker-entrypoint.sh https://github.com/nats-io/nats-streaming-docker/blob/master/0.22.0/alpine3.13/docker-entrypoint.sh
+```
+FROM golang:1.16-alpine AS builder
+
+RUN apk add --update git
+RUN apk add build-base
+
+WORKDIR $GOPATH/src/github.com/nats-io/nats-streaming-server
+
+MAINTAINER Alexei Karve <karve@us.ibm.com>
+
+COPY . .
+
+RUN CGO_ENABLED=0 GO111MODULE=off go build -v -a -tags netgo -installsuffix netgo -ldflags "-s -w -X github.com/nats-io/nats-streaming-server/server.gitCommit=`git rev-parse --short HEAD`" -o /nats-streaming-server
+
+FROM alpine:latest
+
+RUN apk add --update ca-certificates
+
+COPY --from=builder /nats-streaming-server /usr/local/bin/nats-streaming-server
+RUN ln -s /usr/local/bin/nats-streaming-server /nats-streaming-server
+COPY docker-entrypoint.sh /usr/local/bin
+EXPOSE 4222 8222
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["nats-streaming-server", "-m", "8222"]
+```
+
 ## Building images for ppc64le
 ```
 git clone https://github.com/openfaas/faas.git
@@ -28,7 +56,8 @@ docker push default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/fa
 # image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-streaming:latest-dev
 git clone https://github.com/nats-io/nats-streaming-server.git
 cd nats-streaming-server
-docker build --build-arg BUILDPLATFORM=linux/ppc64le --build-arg http_proxy=http://10.3.0.3:3128 --build-arg https_proxy=http://10.3.0.3:3128 -t default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/nats-streaming:latest-dev -f docker/Dockerfile .
+# Create docker/Dockerfile
+docker build --build-arg http_proxy=http://10.3.0.3:3128 --build-arg https_proxy=http://10.3.0.3:3128 -t default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/nats-streaming:latest-dev -f docker/Dockerfile .
 docker push default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/nats-streaming:latest-dev --tls-verify=false
 # image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-queue-worker:latest-dev
 # Comment out the following line in Dockerfile, it gives error on ppc64le because the /scratch-tmp is empty
@@ -60,8 +89,8 @@ make
 # Creates bin/arkade
 ```
 
-# Building watchdog for ppc64le used in Dockerfiles used by functions
-You can copy over the bin/fwatchdog-ppc64le into the template folder with teh Dockerfile for functions
+## Building watchdog for ppc64le used in Dockerfiles used by functions
+You can copy over the bin/fwatchdog-ppc64le into the template folder with the Dockerfile for functions
 ```
 git clone https://github.com/openfaas/classic-watchdog.git
 cd classic-watchdog
