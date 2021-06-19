@@ -198,6 +198,40 @@ helm delete openfaas --namespace openfaas
 
 ## Samples
 ### Pi
+#### Generate the new pi-ppc64le from docker-file template
+```
+faas-cli new pi2-ppc64le --lang dockerfile-perl
+```
+The following ENV for the fixed value of 100 works:
+```
+ENV fprocess='perl -Mbignum=bpi -wle print(bpi(100))'
+```
+I could not however figure out how to escape the ENV for fprocess with either of the following:
+```
+'foreach my $line ( <STDIN> ) { chomp($line);if ($line=~/^$/) { last; } print(bpi($line)); }'
+"foreach my \$line ( <STDIN> ) { chomp(\$line);if (\$line=~/^\$/) { last; } print(bpi(\$line)); }"
+```
+
+So I added a separate file runme.pl and invoke it in fprocess. 
+
+**runme.pl**
+```
+#!/usr/local/bin/perl
+use bignum;
+foreach my $line ( <STDIN> ) { chomp($line);print $line,"\n";if ($line=~/^$/) { last; } print(bignum::bpi($line),"\n"); }
+```
+
+Thus replace the "ENV fprocess" in Dockerfile with the lines below:
+```
+COPY runme.pl /home/app/runme.pl
+RUN chown app /home/app/runme.pl
+ENV fprocess="/home/app/runme.pl"
+```
+
+#### Update the pi-ppc64le.yml
+Update the image: pi-ppc64le:latest with image: karve/pi-ppc64le:latest
+and gateway: http://gateway-external-openfaas.apps.ibm-hcs.priv
+
 #### Test locally on docker
 ```
 faas-cli build -f ./pi-ppc64le.yml && docker run --rm -p 8081:8080 --name test-this karve/pi-ppc64le
