@@ -197,6 +197,32 @@ helm delete openfaas --namespace openfaas
 ```
 
 ## Samples
+### Pi
+#### Test locally on docker
+```
+faas-cli build -f ./pi-ppc64le.yml && docker run --rm -p 8081:8080 --name test-this karve/pi-ppc64le
+curl http://127.0.0.1:8081 --data-binary @test
+```
+**test**
+```
+10
+20
+30
+
+```
+
+#### Test locally on docker
+```
+# Delete old instance
+#faas-cli delete pi-ppc64le --gateway http://gateway-external-openfaas.apps.ibm-hcs.priv
+faas-cli build -f ./pi-ppc64le.yml && docker run --rm -p 8081:8080 --name test-this karve/pi-ppc64le
+docker push karve/pi-ppc64le
+faas-cli deploy -f ./pi-ppc64le.yml
+faas-cli list --gateway http://gateway-external-openfaas.apps.ibm-hcs.priv
+printf "10\n20\n30\n" | faas-cli invoke pi-ppc64le --gateway http://gateway-external-openfaas.apps.ibm-hcs.priv
+printf "10\n20\n30\n" | curl -X POST --data-binary @- http://gateway-external-openfaas.apps.ibm-hcs.priv/function/pi-ppc64le -vvv -H "Content-Type:text/plain"
+```
+
 ### Figlet
 ```
 faas-cli build -f ./faas-figlet.yml
