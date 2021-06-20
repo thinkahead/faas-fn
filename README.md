@@ -197,29 +197,57 @@ helm delete openfaas --namespace openfaas
 ```
 
 ## Samples
-### Pi
-#### Generate the new pi-ppc64le from dockerfile-perl template
-```
-faas-cli new pi2-ppc64le --lang dockerfile-perl
-```
-This template contains a Dockerfile that installs perl with the following ENV for computing the value of Pi with the fixed value of 100 digits:
+### Return PI or Euler's constant to the wanted accuracy
+#### Print value of Pi to fixed accuracy
+The dockerfile-ppc64le template contains a Dockerfile using perl from alpine:3.12 docker image. The ENV is set as follows for computing the value of Pi with the fixed value of 100 digits
 ```
 ENV fprocess='perl -Mbignum=bpi -wle print(bpi(100))'
 ```
+The following snippet shows all the commands to build, deploy and invoke this function on openfaas
+```
+export OPENFAAS_PREFIX=karve
+export OPENFAAS_URL=http://gateway-external-openfaas.apps.ibm-hcs.priv
+faas-cli new pi-$OPENFAAS_PREFIX-ppc64le --lang dockerfile-ppc64le
+vi pi-$OPENFAAS_PREFIX-ppc64le/Dockerfile # Append perl to apk add. It will install perl 5.30.3-r0
+sed -i "s/lang: dockerfile-ppc64le/lang: dockerfile/" pi-$OPENFAAS_PREFIX-ppc64le.yml # Change lang: dockerfile
+#vi pi-$OPENFAAS_PREFIX-ppc64le.yml # Change lang: dockerfile
+faas-cli build -f pi-$OPENFAAS_PREFIX-ppc64le.yml
+docker login -u $OPENFAAS_PREFIX
+docker push $OPENFAAS_PREFIX/pi-$OPENFAAS_PREFIX-ppc64le
+faas-cli deploy -f ./pi-$OPENFAAS_PREFIX-ppc64le.yml
+echo "" | faas-cli invoke pi-karve-ppc64le --gateway $OPENFAAS_URL
+curl $OPENFAAS_URL/function/pi-$OPENFAAS_PREFIX-ppc64le
+#rm -rf pi-$OPENFAAS_PREFIX-ppc64le*
+```
+Replace the ENV with bpi(100) in Dockerfile with bexp(1,100) to find the value of e raised to appropriate power or any other function https://perldoc.perl.org/bignum
+
+#### Generate the new pi-ppc64le from dockerfile-perl template
+
+The Dockerfile in dockerfile-perl template is updated for installing perl 5.32.0 as in https://github.com/scottw/alpine-perl
+```
+faas-cli new pi-ppc64le --lang dockerfile-perl
+```
+This template also contains a Dockerfile that installs perl with the following ENV for computing the value of Pi with the fixed value of 100 digits as before. In this scenario, we want to find values of PI or Euler's constant to multiple digits of accuracy.
 
 I could not however figure out how to escape the ENV for fprocess with either of the following:
 ```
 'foreach my $line ( <STDIN> ) { chomp($line);if ($line=~/^$/) { last; } print(bpi($line)); }'
 "foreach my \$line ( <STDIN> ) { chomp(\$line);if (\$line=~/^\$/) { last; } print(bpi(\$line)); }"
 ```
+If someone can find the appropriate escape characters, please leaven comments below.  I added a separate file runme.pl and invoke it in fprocess. 
 
-So I added a separate file runme.pl and invoke it in fprocess. 
-
-**runme.pl**
+**runme.pl** for PI
 ```
 #!/usr/local/bin/perl
 use bignum;
 foreach my $line ( <STDIN> ) { chomp($line);print $line,"\n";if ($line=~/^$/) { last; } print(bignum::bpi($line),"\n"); }
+```
+
+**runme.pl** for Euler's number e raised to the appropriate power, to the wanted accuracy.
+```
+#!/usr/local/bin/perl
+use bignum;
+foreach my $line ( <STDIN> ) { chomp($line);print $line,"\n";if ($line=~/^$/) { last; } print(bignum::bexp((split(' ',$line))[0],(split(' ',$line))[1]),"\n"); }
 ```
 
 Thus replace the "ENV fprocess" in Dockerfile with the lines below:
@@ -248,8 +276,6 @@ curl http://127.0.0.1:8081 --data-binary @test
 
 #### Test function on cluster
 ```
-# Delete old instance
-#faas-cli delete pi-ppc64le --gateway http://gateway-external-openfaas.apps.ibm-hcs.priv
 faas-cli build -f ./pi-ppc64le.yml
 docker push karve/pi-ppc64le
 faas-cli deploy -f ./pi-ppc64le.yml
@@ -263,6 +289,31 @@ Output
 20 3.1415926535897932385
 30 3.14159265358979323846264338328
 ```
+
+#### Delete the instance of pi-ppc64le
+```
+faas-cli delete pi-ppc64le --gateway http://gateway-external-openfaas.apps.ibm-hcs.priv
+```
+
+#### Testing with CRDs
+We can buiolld the image directly with docker command use the image we build with the openfaas-cli  build command earlier:
+```
+cd pi-ppc64le
+doker build -t karve/pi-ppc64le .
+cd ..
+```
+
+We can install using the pi-ppc64le-function.yml if --operator is set during install of openfaas
+```
+oc apply -f pi-ppc64le-function.yml
+oc get function -n openfaas-fn
+```
+
+#### Deleting the function
+```
+oc delete function pi-ppc64le -n openfaas-fn
+```
+
 ### Figlet
 ```
 faas-cli build -f ./faas-figlet.yml
