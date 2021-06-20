@@ -1,0 +1,9 @@
+# pi-ppc64le-function.yaml
+apiVersion: openfaas.com/v1
+kind: Function
+metadata:
+  name: pi-ppc64le
+  namespace: openfaas-fn
+spec:
+  name: pi-ppc64le
+  image: karve/pi-ppc64le:latest
