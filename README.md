@@ -198,14 +198,15 @@ helm delete openfaas --namespace openfaas
 
 ## Samples
 ### Pi
-#### Generate the new pi-ppc64le from docker-file template
+#### Generate the new pi-ppc64le from dockerfile-perl template
 ```
 faas-cli new pi2-ppc64le --lang dockerfile-perl
 ```
-The following ENV for the fixed value of 100 works:
+This template contains a Dockerfile that installs perl with the following ENV for computing the value of Pi with the fixed value of 100 digits:
 ```
 ENV fprocess='perl -Mbignum=bpi -wle print(bpi(100))'
 ```
+
 I could not however figure out how to escape the ENV for fprocess with either of the following:
 ```
 'foreach my $line ( <STDIN> ) { chomp($line);if ($line=~/^$/) { last; } print(bpi($line)); }'
@@ -224,12 +225,12 @@ foreach my $line ( <STDIN> ) { chomp($line);print $line,"\n";if ($line=~/^$/) { 
 Thus replace the "ENV fprocess" in Dockerfile with the lines below:
 ```
 COPY runme.pl /home/app/runme.pl
-RUN chown app /home/app/runme.pl
 ENV fprocess="/home/app/runme.pl"
 ```
 
 #### Update the pi-ppc64le.yml
-Update the image: pi-ppc64le:latest with image: karve/pi-ppc64le:latest
+The faas-cli build command however adds the Dockerfile from the template into the build/pi2-ppc64le/function/ directory instead of the build/pi2-ppc64le/. So we change the lang: dockerfile-perl to lang: dockerfile.
+Also update the image: pi-ppc64le:latest with image: karve/pi-ppc64le:latest
 and gateway: http://gateway-external-openfaas.apps.ibm-hcs.priv
 
 #### Test locally on docker
@@ -245,18 +246,23 @@ curl http://127.0.0.1:8081 --data-binary @test
 
 ```
 
-#### Test locally on docker
+#### Test function on cluster
 ```
 # Delete old instance
 #faas-cli delete pi-ppc64le --gateway http://gateway-external-openfaas.apps.ibm-hcs.priv
-faas-cli build -f ./pi-ppc64le.yml && docker run --rm -p 8081:8080 --name test-this karve/pi-ppc64le
+faas-cli build -f ./pi-ppc64le.yml
 docker push karve/pi-ppc64le
 faas-cli deploy -f ./pi-ppc64le.yml
 faas-cli list --gateway http://gateway-external-openfaas.apps.ibm-hcs.priv
 printf "10\n20\n30\n" | faas-cli invoke pi-ppc64le --gateway http://gateway-external-openfaas.apps.ibm-hcs.priv
 printf "10\n20\n30\n" | curl -X POST --data-binary @- http://gateway-external-openfaas.apps.ibm-hcs.priv/function/pi-ppc64le -vvv -H "Content-Type:text/plain"
 ```
-
+Output
+```
+10 3.141592654
+20 3.1415926535897932385
+30 3.14159265358979323846264338328
+```
 ### Figlet
 ```
 faas-cli build -f ./faas-figlet.yml
