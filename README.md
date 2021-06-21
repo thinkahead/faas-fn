@@ -207,7 +207,7 @@ The following snippet shows all the commands to build, deploy and invoke this fu
 ```
 export OPENFAAS_PREFIX=karve
 export OPENFAAS_URL=http://gateway-external-openfaas.apps.ibm-hcs.priv
-faas-cli new pi-$OPENFAAS_PREFIX-ppc64le --lang dockerfile-ppc64le
+faas-cli new pi-$OPENFAAS_PREFIX-ppc64le --lang dockerfile-ppc64le # --prefix=$OPENFAAS_PREFIX
 vi pi-$OPENFAAS_PREFIX-ppc64le/Dockerfile # Append perl to apk add. It will install perl 5.30.3-r0
 sed -i "s/lang: dockerfile-ppc64le/lang: dockerfile/" pi-$OPENFAAS_PREFIX-ppc64le.yml # Change lang: dockerfile
 #vi pi-$OPENFAAS_PREFIX-ppc64le.yml # Change lang: dockerfile
@@ -220,6 +220,23 @@ curl $OPENFAAS_URL/function/pi-$OPENFAAS_PREFIX-ppc64le
 #rm -rf pi-$OPENFAAS_PREFIX-ppc64le*
 ```
 Replace the ENV with bpi(100) in Dockerfile with bexp(1,100) to find the value of e raised to appropriate power or any other function https://perldoc.perl.org/bignum
+
+#### Auto scaling
+```
+faas-cli deploy -f ./pi-$OPENFAAS_PREFIX-ppc64le.yml   --label com.openfaas.scale.max=10   --label com.openfaas.scale.min=1
+faas-cli describe pi-$OPENFAAS_PREFIX-ppc64le --gateway $OPENFAAS_URL
+for i in {0..100}; do echo "" | faas-cli invoke pi-$OPENFAAS_PREFIX-ppc64le --gateway $OPENFAAS_URL && echo; done;
+watch "faas-cli describe pi-$OPENFAAS_PREFIX-ppc64le --gateway $OPENFAAS_URL;oc get pods -n openfaas-fn"
+```
+In prometheus graph
+```
+rate( gateway_function_invocation_total{code="200"} [20s])
+```
+
+Instead of the for loop in bash to generate load, we can use hey https://github.com/rakyll/hey
+```
+hey -z=5m -q 100 -c 20 -m POST -d=Test http://gateway-external-openfaas.apps.ibm-hcs.priv//function/pi-karve-ppc64le
+```
 
 #### Generate the new pi-ppc64le from dockerfile-perl template
 
@@ -367,3 +384,6 @@ uname -a | curl -X POST --data-binary @- http://localhost:8081/function/hello-no
 curl http://admin:$PASSWORD@localhost:8081/function/hello-node10-ppc64le -d 'Hi' -H "Content-Type:text/plain"
 faas-cli delete hello-node10-ppc64le --gateway http://localhost:8081
 ```
+
+## References
+https://github.com/openfaas/workshop/blob/master/README.md
