@@ -223,7 +223,7 @@ Replace the ENV with bpi(100) in Dockerfile with bexp(1,100) to find the value o
 
 #### Auto scaling
 ```
-faas-cli deploy -f ./pi-$OPENFAAS_PREFIX-ppc64le.yml   --label com.openfaas.scale.max=10   --label com.openfaas.scale.min=1
+faas-cli deploy -f ./pi-$OPENFAAS_PREFIX-ppc64le.yml --label com.openfaas.scale.max=10 --label com.openfaas.scale.min=1
 faas-cli describe pi-$OPENFAAS_PREFIX-ppc64le --gateway $OPENFAAS_URL
 for i in {0..100}; do echo "" | faas-cli invoke pi-$OPENFAAS_PREFIX-ppc64le --gateway $OPENFAAS_URL && echo; done;
 watch "faas-cli describe pi-$OPENFAAS_PREFIX-ppc64le --gateway $OPENFAAS_URL;oc get pods -n openfaas-fn"
@@ -237,6 +237,7 @@ Instead of the for loop in bash to generate load, we can use hey https://github.
 ```
 hey -z=5m -q 100 -c 20 -m POST -d=Test http://gateway-external-openfaas.apps.ibm-hcs.priv//function/pi-karve-ppc64le
 ```
+The options -c will simulate 20 concurrent users, -z will run for 5m and then complete, -q rate limit in queries per second (QPS) 100 per worker.
 
 #### Generate the new pi-ppc64le
 Use the dockerfile-perl template or the dockerfile-ppc64le. The Dockerfile in dockerfile-perl template is updated for installing perl 5.32.0 as in https://github.com/scottw/alpine-perl. The dockerfile-ppc64le uses that perl 5.30.3-r0.
@@ -351,6 +352,31 @@ oc get function -n openfaas-fn
 oc delete function pi-ppc64le -n openfaas-fn
 ```
 
+To use the HPAv2, we need to comment out the following labels from the function and deply again. We do not want to scale using prometheus alert.
+```
+  labels:
+    com.openfaas.scale.min: "2"
+    com.openfaas.scale.max: "15"
+```
+
+** Create a HPAv2 rule for CPU** The parameters -n openfaas-fn refers to where the function is deployed, pi-ppc64le is the name of the function, --cpu-percentage is the level of CPU the pod should reach before additional replicas are added, --min minimum number of pods, --max maximum number of pods. HPA calculates pod cpu utilization as total cpu usage of all containers in pod divided by total requested. https://github.com/kubernetes/kubernetes/blob/v1.9.0/pkg/controller/podautoscaler/metrics/utilization.go#L49
+```
+oc autoscale deployment -n openfaas-fn \
+  pi-ppc64le \
+  --cpu-percent=100 \
+  --min=4 \
+  --max=20
+oc get hpa/pi-ppc64le -n openfaas-fn # View the HPA record
+
+# Generate the load and watch the cpu load
+hey -z=5m -q 100 -c 20 -m POST -d=Test http://gateway-external-openfaas.apps.ibm-hcs.priv/function/pi-ppc64le --data-binary @test -H "Content-Type: text/plain"
+watch "faas-cli describe pi-ppc64le --gateway $OPENFAAS_URL;oc get pods -n openfaas-fn" # Shows the number of replicas and invocations
+watch "kubectl top pod -n openfaas-fn" # Usage of pods
+watch "oc describe hpa/pi-ppc64le -n openfaas-fn" # Get detailed information including any events such as scaling up and down
+```
+HPA reacts slowly to changes in traffic, both for scaling up and for scaling down. In some instances you may wait more than 5 minutes for all your pods to scale back down to default level after the load has stopped.
+
+
 ### Figlet
 ```
 faas-cli build -f ./faas-figlet.yml
@@ -408,3 +434,4 @@ faas-cli delete hello-node10-ppc64le --gateway http://localhost:8081
 ## References
 Self-paced workshop for OpenFaaS https://github.com/openfaas/workshop/blob/master/README.md
 Manage functions with Kubelet https://www.openfaas.com/blog/manage-functions-with-kubectl/
+Metrics HPAv2 with OpenFaaS https://docs.openfaas.com/tutorials/kubernetes-hpa/
