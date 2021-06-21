@@ -359,12 +359,19 @@ oc get function -n openfaas-fn
 oc delete function pi-ppc64le -n openfaas-fn
 ```
 
-To use the HPAv2, we need to comment out the following labels from the function and deploy again with -label com.openfaas.scale.factor=0. We do not want to scale using prometheus alert.
+To use the HPAv2, we need to comment out the following labels from the pi-ppc64le-function.yml and deploy again with -label com.openfaas.scale.factor=0.
 ```
   labels:
     com.openfaas.scale.min: "2"
     com.openfaas.scale.max: "15"
 ```
+
+Alternatively, we can set the labels in the pi-ppc64le-function.yml and apply the yaml.
+```
+    labels:
+      com.openfaas.scale.factor: 0
+```
+We do not want to scale using prometheus alert.
 
 ** Create a HPAv2 rule for CPU** The parameters -n openfaas-fn refers to where the function is deployed, pi-ppc64le is the name of the function, --cpu-percentage is the level of CPU the pod should reach before additional replicas are added, --min minimum number of pods, --max maximum number of pods. HPA calculates pod cpu utilization as total cpu usage of all containers in pod divided by total requested. https://github.com/kubernetes/kubernetes/blob/v1.9.0/pkg/controller/podautoscaler/metrics/utilization.go#L49
 ```
