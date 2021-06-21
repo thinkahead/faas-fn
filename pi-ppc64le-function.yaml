@@ -7,15 +7,18 @@ metadata:
 spec:
   name: pi-ppc64le
   image: karve/pi-ppc64le:latest
-  labels:
-    com.openfaas.scale.min: "2"
-    com.openfaas.scale.max: "15"
+  #labels:
+  #  com.openfaas.scale.min: "2"
+  #  com.openfaas.scale.max: "15"
   environment:
     write_debug: "true"
+    read_timeout: "20s"
+    write_timeout: "20s"
+    exec_timeout: "20s"
   limits:
     cpu: "200m"
     memory: "256Mi"
   requests:
-    cpu: "10m"
+    cpu: "100m"
     memory: "128Mi"
 
