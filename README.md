@@ -84,7 +84,8 @@ docker create --name faas-cli openfaas/faas-cli:latest-dev && docker cp faas-cli
 sudo mv faas-cli /usr/local/bin
 ```
 
-## Building arkade for ppc64le (Optional if you want to use helm)
+## Building arkade for ppc64le (Optional)
+If you want to use helm, arkade is not required.
 ```
 # modify Makefile under dist
 CGO_ENABLED=0 GOOS=linux GOARCH=ppc64le go build -ldflags $(LDFLAGS) -a -installsuffix cgo -o bin/arkade
@@ -92,8 +93,8 @@ make
 # Creates bin/arkade
 ```
 
-## Building watchdog for ppc64le used in Dockerfiles used by functions
-You can copy over the bin/fwatchdog-ppc64le into the template folder with the Dockerfile for functions
+## Building watchdog (Optional)
+The watchdog is used in Dockerfiles used by functions. You do not need to build this. Instead, you can use the docker.io/powerlinux/classic-watchdog:latest-dev-ppc64le as watchdog. However if you build it, then you can copy over the bin/fwatchdog-ppc64le into the template folder with the Dockerfile for functions
 ```
 git clone https://github.com/openfaas/classic-watchdog.git
 cd classic-watchdog
