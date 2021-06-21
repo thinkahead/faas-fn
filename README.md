@@ -1,12 +1,12 @@
 # OpenFaas on ppc64le
 
 ## Images used by openfaas install for ppc64le
-**alertmanager** image: prom/alertmanager-linux-ppc64le  
-**basic-auth-plugin** image: image-registry.openshift-image-registry.svc:5000/openfaas/basic-auth:latest-dev  
-**gateway** image: image-registry.openshift-image-registry.svc:5000/openfaas/gateway:latest-dev and image: image-registry.openshift-image-registry.svc:5000/openfaas/faas-netes:latest-dev  
-**nats** image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-streaming:latest-dev  
-**prometheus** image: prom/prometheus-linux-ppc64le
-**queue-worker** image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-queue-worker:latest-dev  
+- **alertmanager** image: prom/alertmanager-linux-ppc64le    
+- **basic-auth-plugin** image: image-registry.openshift-image-registry.svc:5000/openfaas/basic-auth:latest-dev    
+- **gateway** image: image-registry.openshift-image-registry.svc:5000/openfaas/gateway:latest-dev and image: image-registry.openshift-image-registry.svc:5000/openfaas/faas-netes:latest-dev    
+- **nats** image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-streaming:latest-dev    
+- **prometheus** image: prom/prometheus-linux-ppc64le    
+- **queue-worker** image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-queue-worker:latest-dev    
 
 ## Dockerfile for nats-streaming-server using in next section
 Use the following docker/Dockerfile and docker/docker-entrypoint.sh https://github.com/nats-io/nats-streaming-docker/blob/master/0.22.0/alpine3.13/docker-entrypoint.sh
@@ -378,7 +378,7 @@ kubectl scale -n openfaas deploy/alertmanager --replicas=0
 ```
 We do not want to scale using prometheus alerts.
 
-** Create a HPAv2 rule for CPU** The parameters -n openfaas-fn refers to where the function is deployed, pi-ppc64le is the name of the function, --cpu-percentage is the level of CPU the pod should reach before additional replicas are added, --min minimum number of pods, --max maximum number of pods. HPA calculates pod cpu utilization as total cpu usage of all containers in pod divided by total requested. https://github.com/kubernetes/kubernetes/blob/v1.9.0/pkg/controller/podautoscaler/metrics/utilization.go#L49
+**Create a HPAv2 rule for CPU** The parameters -n openfaas-fn refers to where the function is deployed, pi-ppc64le is the name of the function, --cpu-percentage is the level of CPU the pod should reach before additional replicas are added, --min minimum number of pods, --max maximum number of pods. HPA calculates pod cpu utilization as total cpu usage of all containers in pod divided by total requested. https://github.com/kubernetes/kubernetes/blob/v1.9.0/pkg/controller/podautoscaler/metrics/utilization.go#L49
 ```
 oc autoscale deployment -n openfaas-fn \
   pi-ppc64le \
@@ -481,6 +481,6 @@ faas-cli delete hello-node10-ppc64le --gateway http://localhost:8081
 ```
 
 ## References
-Self-paced workshop for OpenFaaS https://github.com/openfaas/workshop/blob/master/README.md
-Manage functions with Kubelet https://www.openfaas.com/blog/manage-functions-with-kubectl/
-Metrics HPAv2 with OpenFaaS https://docs.openfaas.com/tutorials/kubernetes-hpa/
+- Self-paced workshop for OpenFaaS https://github.com/openfaas/workshop/blob/master/README.md
+- Manage functions with Kubelet https://www.openfaas.com/blog/manage-functions-with-kubectl/
+- Metrics HPAv2 with OpenFaaS https://docs.openfaas.com/tutorials/kubernetes-hpa/
