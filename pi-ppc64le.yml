@@ -7,4 +7,7 @@ functions:
     lang: dockerfile
     handler: ./pi-ppc64le
     image: karve/pi-ppc64le:latest
-
+    environment:
+      read_timeout: "5s"
+      write_timeout: "5s"
+      exec_timeout: "5s"
