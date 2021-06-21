@@ -290,12 +290,12 @@ ENV fprocess="/home/app/runme.pl"
 The faas-cli build command however adds the Dockerfile from the template into the build/pi2-ppc64le/function/ directory instead of the build/pi2-ppc64le/. So we change the lang: dockerfile-perl to lang: dockerfile.
 Also update the image: pi-ppc64le:latest with image: karve/pi-ppc64le:latest
 and gateway: http://gateway-external-openfaas.apps.ibm-hcs.priv
-If you are going to provide larger values for accuracy, you wiull need to increase the environment in template.yml.
+If you are going to provide larger values for accuracy, you will need to increase the environment in template.yml.
 ```
     environment:
-      read_timeout: "5s"
-      write_timeout: "5s"
-      exec_timeout: "5s"
+      read_timeout: "20s"
+      write_timeout: "20s"
+      exec_timeout: "20s"
 ```
 #### Test locally on docker
 ```
