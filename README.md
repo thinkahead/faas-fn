@@ -203,6 +203,13 @@ The dockerfile-ppc64le template contains a Dockerfile using perl from alpine:3.1
 ```
 ENV fprocess='perl -Mbignum=bpi -wle print(bpi(100))'
 ```
+
+The Dockerfile in dockerfile-ppc64le refers to the classic-watchdog ppc64le binary that can either be compiled locally or from docker.io/powerlinux
+```
+#FROM ghcr.io/openfaas/classic-watchdog:0.1.5 as watchdog
+FROM docker.io/powerlinux/classic-watchdog:latest-dev-ppc64le as watchdog
+```
+
 The following snippet shows all the commands to build, deploy and invoke this function on openfaas
 ```
 export OPENFAAS_PREFIX=karve
