@@ -48,14 +48,12 @@ RUN chmod +x /usr/bin/fwatchdog
 # Add non root user
 RUN addgroup -S app && adduser app -S -G app
 RUN chown app /home/app
-COPY runme.pl /home/app/runme.pl
-RUN chown app /home/app/runme.pl
 WORKDIR /home/app
 
 USER app
-RUN which cat
 
 # Populate example here - i.e. "cat", "sha512sum" or "node index.js"
+COPY runme.pl /home/app/runme.pl
 ENV fprocess="/home/app/runme.pl"
 #ENV fprocess="cat"
 #ENV fprocess='perl -Mbignum=bpi -wle print(bpi(100))'
