@@ -371,25 +371,60 @@ Alternatively, we can set the labels in the pi-ppc64le-function.yml and apply th
     labels:
       com.openfaas.scale.factor: 0
 ```
-We do not want to scale using prometheus alert.
+
+We can also disable auto-scaling by scaling alertmanager down to zero replicas, this will stop it from firing alerts.
+```
+kubectl scale -n openfaas deploy/alertmanager --replicas=0
+```
+We do not want to scale using prometheus alerts.
 
 ** Create a HPAv2 rule for CPU** The parameters -n openfaas-fn refers to where the function is deployed, pi-ppc64le is the name of the function, --cpu-percentage is the level of CPU the pod should reach before additional replicas are added, --min minimum number of pods, --max maximum number of pods. HPA calculates pod cpu utilization as total cpu usage of all containers in pod divided by total requested. https://github.com/kubernetes/kubernetes/blob/v1.9.0/pkg/controller/podautoscaler/metrics/utilization.go#L49
 ```
 oc autoscale deployment -n openfaas-fn \
   pi-ppc64le \
-  --cpu-percent=100 \
-  --min=4 \
+  --cpu-percent=50 \
+  --min=2 \
   --max=20
 oc get hpa/pi-ppc64le -n openfaas-fn # View the HPA record
 
 # Generate the load and watch the cpu load
-hey -z=5m -q 100 -c 20 -m POST -d=Test http://gateway-external-openfaas.apps.ibm-hcs.priv/function/pi-ppc64le --data-binary @test -H "Content-Type: text/plain"
+hey -z=10m -c 2 -m POST -d=Test http://gateway-external-openfaas.apps.ibm-hcs.priv/function/pi-ppc64le --data-binary @test -H "Content-Type: text/plain"
 watch "faas-cli describe pi-ppc64le --gateway $OPENFAAS_URL;oc get pods -n openfaas-fn" # Shows the number of replicas and invocations
 watch "kubectl top pod -n openfaas-fn" # Usage of pods
 watch "oc describe hpa/pi-ppc64le -n openfaas-fn" # Get detailed information including any events such as scaling up and down
 ```
 HPA reacts slowly to changes in traffic, both for scaling up and for scaling down. In some instances you may wait more than 5 minutes for all your pods to scale back down to default level after the load has stopped.
 
+Sample output from ```oc describe hpa/pi-ppc64le -n openfaas-fn```
+```
+Name:                                                  pi-ppc64le
+Namespace:                                             openfaas-fn
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Mon, 21 Jun 2021 12:31:22 -0400
+Reference:                                             Deployment/pi-ppc64le
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  49% (49m) / 50%
+Min replicas:                                          2
+Max replicas:                                          20
+Deployment pods:                                       6 current / 6 desired
+Conditions:
+  Type            Status  Reason              Message
+  ----            ------  ------              -------
+  AbleToScale     True    ReadyForNewScale    recommended size matches current size
+  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (per
+centage of request)
+  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  3m53s  horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above
+target
+  Normal  SuccessfulRescale  3m37s  horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above
+target
+  Normal  SuccessfulRescale  3m22s  horizontal-pod-autoscaler  New size: 6; reason: cpu resource utilization (percentage of request) above
+target
+```
 
 ### Figlet
 ```
