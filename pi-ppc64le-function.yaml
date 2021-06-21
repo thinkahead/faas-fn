@@ -1,4 +1,4 @@
-# pi-ppc64le-function.yaml
+# Custom Resource pi-ppc64le-function.yaml
 apiVersion: openfaas.com/v1
 kind: Function
 metadata:
