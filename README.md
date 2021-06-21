@@ -238,26 +238,32 @@ Instead of the for loop in bash to generate load, we can use hey https://github.
 hey -z=5m -q 100 -c 20 -m POST -d=Test http://gateway-external-openfaas.apps.ibm-hcs.priv//function/pi-karve-ppc64le
 ```
 
-#### Generate the new pi-ppc64le from dockerfile-perl template
+#### Generate the new pi-ppc64le
+Use the dockerfile-perl template or the dockerfile-ppc64le. The Dockerfile in dockerfile-perl template is updated for installing perl 5.32.0 as in https://github.com/scottw/alpine-perl. The dockerfile-ppc64le uses that perl 5.30.3-r0.
 
-The Dockerfile in dockerfile-perl template is updated for installing perl 5.32.0 as in https://github.com/scottw/alpine-perl
 ```
 faas-cli new pi-ppc64le --lang dockerfile-perl
 ```
-This template also contains a Dockerfile that installs perl with the following ENV for computing the value of Pi with the fixed value of 100 digits as before. In this scenario, we want to find values of PI or Euler's constant to multiple digits of accuracy.
+This template also contains a Dockerfile that installs perl with the following ENV for computing the value of Pi with the fixed value of 100 digits as before. In this scenario, we want to send input withmultiple lines, each line containing the accuracy in number of digits desired. This will thus print values of PI or Euler's constant to multiple digits of accuracy.
 
 I could not however figure out how to escape the ENV for fprocess with either of the following:
 ```
 'foreach my $line ( <STDIN> ) { chomp($line);if ($line=~/^$/) { last; } print(bpi($line)); }'
 "foreach my \$line ( <STDIN> ) { chomp(\$line);if (\$line=~/^\$/) { last; } print(bpi(\$line)); }"
 ```
-If someone can find the appropriate escape characters, please leaven comments below.  I added a separate file runme.pl and invoke it in fprocess. 
+If someone can find the appropriate escape characters for ENV, please leave comments below.  I added a separate file runme.pl to invoke it in fprocess. 
 
 **runme.pl** for PI
 ```
 #!/usr/local/bin/perl
 use bignum;
 foreach my $line ( <STDIN> ) { chomp($line);print $line,"\n";if ($line=~/^$/) { last; } print(bignum::bpi($line),"\n"); }
+```
+For above, we can provide multiple lines as follows where each l;ine is the desired accuracy:
+```
+10
+100
+
 ```
 
 **runme.pl** for Euler's number e raised to the appropriate power, to the wanted accuracy.
@@ -266,8 +272,15 @@ foreach my $line ( <STDIN> ) { chomp($line);print $line,"\n";if ($line=~/^$/) { 
 use bignum;
 foreach my $line ( <STDIN> ) { chomp($line);print $line,"\n";if ($line=~/^$/) { last; } print(bignum::bexp((split(' ',$line))[0],(split(' ',$line))[1]),"\n"); }
 ```
+For above, we can provide multiple lines as follows where first number in each line is the power and second is the desired accuracy:
+```
+1 20
+1 30
+2 30
 
-Thus replace the "ENV fprocess" in Dockerfile with the lines below:
+```
+
+Replace the "ENV fprocess" in Dockerfile with the lines below:
 ```
 COPY runme.pl /home/app/runme.pl
 ENV fprocess="/home/app/runme.pl"
@@ -277,7 +290,13 @@ ENV fprocess="/home/app/runme.pl"
 The faas-cli build command however adds the Dockerfile from the template into the build/pi2-ppc64le/function/ directory instead of the build/pi2-ppc64le/. So we change the lang: dockerfile-perl to lang: dockerfile.
 Also update the image: pi-ppc64le:latest with image: karve/pi-ppc64le:latest
 and gateway: http://gateway-external-openfaas.apps.ibm-hcs.priv
-
+If you are going to provide larger values for accuracy, you wiull need to increase the environment in template.yml.
+```
+    environment:
+      read_timeout: "5s"
+      write_timeout: "5s"
+      exec_timeout: "5s"
+```
 #### Test locally on docker
 ```
 faas-cli build -f ./pi-ppc64le.yml && docker run --rm -p 8081:8080 --name test-this karve/pi-ppc64le
@@ -313,12 +332,13 @@ faas-cli delete pi-ppc64le --gateway http://gateway-external-openfaas.apps.ibm-h
 ```
 
 #### Testing with CRDs
-We can buiolld the image directly with docker command use the image we build with the openfaas-cli  build command earlier:
+We can build the image directly with docker command 
 ```
 cd pi-ppc64le
 doker build -t karve/pi-ppc64le .
 cd ..
 ```
+or use the image we built with the "openfaas-cli build" command previously.
 
 We can install using the pi-ppc64le-function.yml if --operator is set during install of openfaas
 ```
