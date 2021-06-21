@@ -359,7 +359,7 @@ oc get function -n openfaas-fn
 oc delete function pi-ppc64le -n openfaas-fn
 ```
 
-To use the HPAv2, we need to comment out the following labels from the function and deply again. We do not want to scale using prometheus alert.
+To use the HPAv2, we need to comment out the following labels from the function and deploy again with -label com.openfaas.scale.factor=0. We do not want to scale using prometheus alert.
 ```
   labels:
     com.openfaas.scale.min: "2"
