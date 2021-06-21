@@ -1,0 +1,10 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://gateway-external-openfaas.apps.ibm-hcs.priv
+functions:
+  pi-karve-ppc64le:
+    lang: dockerfile
+    handler: ./pi-karve-ppc64le
+    image: karve/pi-karve-ppc64le:latest
+
