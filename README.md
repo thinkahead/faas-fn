@@ -347,7 +347,7 @@ cd pi-ppc64le
 doker build -t karve/pi-ppc64le .
 cd ..
 ```
-or use the image we built with the "openfaas-cli build" command previously.
+or use the image we built with the "faas-cli build" command previously.
 
 We can install using the pi-ppc64le-function.yml if --operator is set during install of openfaas
 ```
@@ -479,6 +479,30 @@ echo -n "hello" | faas-cli invoke hello-node10-ppc64le --gateway http://localhos
 uname -a | curl -X POST --data-binary @- http://localhost:8081/function/hello-node10-ppc64le -vvv -H "Content-Type:text/plain"
 curl http://admin:$PASSWORD@localhost:8081/function/hello-node10-ppc64le -d 'Hi' -H "Content-Type:text/plain"
 faas-cli delete hello-node10-ppc64le --gateway http://localhost:8081
+```
+## Timeouts
+If the functions take a long time to respond
+1. annotate the route with the higher timeout value
+```
+oc annotate route gateway-external --overwrite haproxy.router.openshift.io/timeout=600s -n openfaas
+```
+2. Set the appropriate timeouts in /etc/haproxy/haproxy.cfg
+```
+    timeout http-request    10s
+    timeout queue           10m
+    timeout connect         10s
+    timeout client          10m
+    timeout server          10m
+    timeout http-keep-alive 10s
+    timeout check           10s
+```
+3. Set the timeouts in the function definition environment
+```
+    environment:
+      read_timeout: "600s"
+      write_timeout: "600s"
+      upstream_timeout: "600s"
+      exec_timeout: "600s"
 ```
 
 ## References
