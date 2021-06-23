@@ -112,6 +112,7 @@ make
 ls bin/fwatchdog-ppc64le
 cd ..
 ```
+More details about both the classic watchdog and of-watchdog are at https://docs.openfaas.com/architecture/watchdog/
 
 ## Issues
 ### Tight container limits may cause "read init-p: connection reset by peer"
@@ -505,7 +506,27 @@ oc annotate route gateway-external --overwrite haproxy.router.openshift.io/timeo
       exec_timeout: "600s"
 ```
 
+## Creating prometheus alert
+For scaling up, try:
+```
+        - alert: APIHighRetryRate
+          expr: sum(rate(gateway_function_invocation_total{code="429"}[10s])) BY (function_name) > 1
+          for: 5s
+          labels:
+            service: gateway
+            severity: major
+          annotations:
+            description: High retry rate on "{{$labels.function_name}}"
+            summary: High retry rate on "{{$labels.function_name}}"
+```
+Add it to your config
+```
+oc edit -n openfaas configmap/prometheus-config
+```
+
 ## References
 - Self-paced workshop for OpenFaaS https://github.com/openfaas/workshop/blob/master/README.md
 - Manage functions with Kubelet https://www.openfaas.com/blog/manage-functions-with-kubectl/
 - Metrics HPAv2 with OpenFaaS https://docs.openfaas.com/tutorials/kubernetes-hpa/
+- Custom Alert for 429 https://github.com/openfaas/nats-queue-worker/issues/105#issuecomment-787494533
+- Serverless Computing on Constrained Edge Devices https://helda.helsinki.fi/bitstream/handle/10138/314280/Tilles_Jan_Pro_gradu_2020.pdf?sequence=3&isAllowed=y
