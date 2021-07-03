@@ -1,0 +1,19 @@
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pi-ppc64le-cpu
+  namespace: openfaas-fn
+spec:
+  maxReplicas: 20
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pi-ppc64le
+  metrics: 
+  - type: Resource
+    resource:
+      name: cpu 
+      target:
+        type: AverageValue
+        averageValue: 200m
