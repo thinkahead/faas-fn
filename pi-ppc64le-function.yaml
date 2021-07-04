@@ -17,9 +17,9 @@ spec:
     write_timeout: "600s"
     exec_timeout: "600s"
   limits:
-    cpu: "200m"
-    memory: "256Mi"
+    cpu: "500m"
+    memory: "500Mi"
   requests:
     cpu: "100m"
-    memory: "128Mi"
+    memory: "60Mi"
 

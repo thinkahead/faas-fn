@@ -8,6 +8,12 @@ functions:
     handler: ./pi-ppc64le
     image: karve/pi-ppc64le:latest
     environment:
-      read_timeout: "5s"
-      write_timeout: "5s"
-      exec_timeout: "5s"
+      read_timeout: "600s"
+      write_timeout: "600s"
+      exec_timeout: "600s"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+    requests:
+      cpu: "100m"
+      memory: "60Mi"
