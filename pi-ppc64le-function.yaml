@@ -16,6 +16,7 @@ spec:
     read_timeout: "600s"
     write_timeout: "600s"
     exec_timeout: "600s"
+    #max_inflight: "2"
   limits:
     cpu: "500m"
     memory: "500Mi"
