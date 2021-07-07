@@ -199,7 +199,7 @@ helm delete openfaas --namespace openfaas
 ```
 
 ## Samples
-### Return PI or Euler's constant to the wanted accuracy
+### Return PI or Euler's number to the wanted accuracy
 #### Print value of Pi to fixed accuracy
 The dockerfile-ppc64le template contains a Dockerfile using perl from alpine:3.12 docker image. The ENV is set as follows for computing the value of Pi with the fixed value of 100 digits
 ```
@@ -254,7 +254,7 @@ Use the dockerfile-perl template or the dockerfile-ppc64le. The Dockerfile in do
 ```
 faas-cli new pi-ppc64le --lang dockerfile-perl
 ```
-This template also contains a Dockerfile that installs perl with the following ENV for computing the value of Pi with the fixed value of 100 digits as before. In this scenario, we want to send input withmultiple lines, each line containing the accuracy in number of digits desired. This will thus print values of PI or Euler's constant to multiple digits of accuracy.
+This template also contains a Dockerfile that installs perl with the following ENV for computing the value of Pi with the fixed value of 100 digits as before. In this scenario, we want to send input withmultiple lines, each line containing the accuracy in number of digits desired. This will thus print values of PI or Euler's number to multiple digits of accuracy.
 
 I could not however figure out how to escape the ENV for fprocess with either of the following:
 ```
