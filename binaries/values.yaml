@@ -70,7 +70,7 @@ gateway:
   image: image-registry.openshift-image-registry.svc:5000/openfaas/gateway:latest-dev
   readTimeout : "3600s"
   writeTimeout : "3600s"
-  upstreamTimeout : "3580"  # Must be smaller than read/write_timeout
+  upstreamTimeout : "3580s"  # Must be smaller than read/write_timeout
   replicas: 1
   scaleFromZero: true
   # change the port when creating multiple releases in the same baremetal cluster
