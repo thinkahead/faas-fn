@@ -96,8 +96,8 @@ basicAuthPlugin:
 
 faasnetes:
   image: image-registry.openshift-image-registry.svc:5000/openfaas/faas-netes:latest-dev
-  readTimeout : "60s"
-  writeTimeout : "60s"
+  readTimeout : "3600s"
+  writeTimeout : "3600s"
   imagePullPolicy : "Always"    # Image pull policy for deployed functions
   httpProbe: true               # Setting to true will use HTTP for readiness and liveness probe on Pods (incompatible with Istio < 1.1.5)
   setNonRootUser: false
