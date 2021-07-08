@@ -57,7 +57,7 @@ def process(index,total,value):
                 print("Processed",index,"/",total,value, flush=True)
                 return value
 
-values=[i for i in range(2000,2100,3)]
+values=[i for i in range(1800,2200,3)]
 total=len(values)
 results = Parallel(n_jobs=64, prefer="threads")(delayed(process)(index,total,value) for index,value in enumerate(values))
 print(results, flush=True)
