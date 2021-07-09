@@ -523,6 +523,21 @@ Add it to your config
 ```
 oc edit -n openfaas configmap/prometheus-config
 ```
+## OpenFaaS Dashboard in Grafana
+```
+PROXY_URL="//10.3.0.3:3128";export http_proxy="http:$PROXY_URL";export https_proxy="http:$PROXY_URL";export no_proxy=gateway-external-openfaas.apps.ibm-hcs.priv,localhost,127.0.0.1,api.ibm-hcs.priv,10.3.158.61
+git clone https://github.com/stefanprodan/faas-grafana.git
+cd faas-grafana/Grafana
+# vi Dockerfile # Change FROM ibmcom/grafana-ppc64le:5.2.0-f4
+docker build -t default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/faas-grafana:5.2.0-f4 .
+unset http_proxy;unset https_proxy
+docker push default-route-openshift-image-registry.apps.ibm-hcs.priv/openfaas/faas-grafana:5.2.0-f4 --tls-verify=false
+# Deploy a pod for Grafana
+oc -n openfaas run --image=image-registry.openshift-image-registry.svc:5000/openfaas/faas-grafana:5.2.0-f4 --port=3000 grafana
+oc -n openfaas expose pod grafana --type=NodePort --name=grafana
+oc expose svc grafana
+oc -n openfaas get routes grafana -o jsonpath='{.spec.host}'
+```
 
 ## References
 - Self-paced workshop for OpenFaaS https://github.com/openfaas/workshop/blob/master/README.md
