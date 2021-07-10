@@ -1,0 +1,2 @@
+language: python3-flask-debian-ppc64le
+fprocess: python index.py
