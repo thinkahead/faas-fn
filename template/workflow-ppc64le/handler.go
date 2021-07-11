@@ -46,10 +46,16 @@ func handle(req []byte) []byte {
 		return []byte(err.Error())
 	}
 
+	gatewayURL := workflow.Workflow.GatewayURL
+	if gatewayURL[len(gatewayURL)-1] != '/' {
+		gatewayURL = gatewayURL + "/"
+	}
+
 	previousInput := req
 	for i, step := range workflow.Workflow.Steps {
 		st := time.Now()
-		result, statusCode, resErr := runStep(step, workflow.Workflow.GatewayURL, &previousInput)
+
+		result, statusCode, resErr := runStep(step, gatewayURL, &previousInput)
 		log.Printf("[%d] %s %d byte(s) HTTP: %d - %fs\n",
 			i,
 			step.Name,

@@ -1,0 +1,15 @@
+workflow:
+  name: transpose-bw-thumbnail
+  gateway_url: http://gateway-external-openfaas.apps.ibm-hcs.priv
+  steps:
+    - name: transpose
+      function: pil-transpose-ppc64le
+      method: POST
+
+    - name: bw
+      function: pil-bw-ppc64le
+      method: POST
+
+    - name: thumbnail
+      function: pil-thumbnail-ppc64le
+      method: POST

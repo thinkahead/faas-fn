@@ -1,0 +1,16 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://gateway-external-openfaas.apps.ibm-hcs.priv
+functions:
+  chaining-ppc64le:
+    lang: workflow-ppc64le
+    handler: ./chaining-ppc64le
+    image: image-registry.openshift-image-registry.svc:5000/openfaas-fn/chaining-ppc64le:latest
+    #image: karve/chaining-ppc64le:latest
+    build_args:
+      TARGETPLATFORM: linux/ppc64le
+      BUILDPLATFORM: linux/ppc64le
+      TARGETOS: linux
+      TARGETARCH: ppc64le
+
