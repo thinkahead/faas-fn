@@ -1,0 +1,39 @@
+import io
+import sys
+import os
+import logging
+import time
+
+logging.basicConfig(level=logging.DEBUG)
+
+def handle(req):
+    logging.debug("Making request to open notify API")
+    #return b"Hello", 200, {"Content-type": "application/octet-stream"}
+    buf = io.BytesIO()
+    from PIL import Image
+    with Image.open(io.BytesIO(req)) as im:
+        query = os.environ['Http_Query']
+        if query: logging.debug("query "+query)
+        #params = parse_qs(query)
+        #action = params['action'][0]
+
+        http_path=os.getenv("Http_Path")
+        if http_path: logging.debug("http_path "+http_path)
+        else: logging.debug("http_path")
+        if http_path is None:
+            im = im.convert("L")
+        elif http_path=="/draft":
+            logging.debug("original",im.mode,im.size)
+            im_draft = im.draft("L", (100, 100))
+            logging.debug(im_draft,"draft",im.mode,im.size)
+        else:
+            im = im.convert("L")
+        try:
+            im.save(buf, format='JPEG')
+        except OSError:
+            return "cannot process input file", 500, {"Content-type": "text/plain"}
+        byte_im = buf.getvalue()
+        # Return a binary response
+        return byte_im, 200, {"Content-type": "application/octet-stream"}
+
+

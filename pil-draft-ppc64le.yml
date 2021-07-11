@@ -1,0 +1,17 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://gateway-external-openfaas.apps.ibm-hcs.priv
+functions:
+  pil-draft-ppc64le:
+    lang: python3-flask-debian-ppc64le
+    handler: ./pil-draft-ppc64le
+    #image: karve/pil-draft-ppc64le:latest
+    image: image-registry.openshift-image-registry.svc:5000/openfaas-fn/pil-draft-ppc64le:latest
+    environment:
+      RAW_BODY: True
+      read_timeout: "600s"
+      write_timeout: "600s"
+      exec_timeout: "600s"
+      write_debug: true
+      combine_output: false
