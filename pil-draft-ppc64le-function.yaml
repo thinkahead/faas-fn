@@ -1,0 +1,29 @@
+# Custom Resource pil-draft-ppc64le-function.yaml
+apiVersion: openfaas.com/v1
+kind: Function
+metadata:
+  name: pil-draft-ppc64le
+  namespace: openfaas-fn
+spec:
+  name: pil-draft-ppc64le
+  image: image-registry.openshift-image-registry.svc:5000/openfaas-fn/pil-draft-ppc64le:latest
+  #image: karve/pil-draft-ppc64le:latest
+  labels:
+    com.openfaas.scale.factor: "0"
+  #  com.openfaas.scale.min: "2"
+  #  com.openfaas.scale.max: "15"
+  environment:
+    RAW_BODY: "true"
+    write_debug: "true"
+    read_timeout: "600s"
+    write_timeout: "600s"
+    exec_timeout: "600s"
+    upstream_timeout: "600s"
+    combine_output: "false"
+    #max_inflight: "2"
+  limits:
+    cpu: "500m"
+    memory: "500Mi"
+  requests:
+    cpu: "100m"
+    memory: "60Mi"
