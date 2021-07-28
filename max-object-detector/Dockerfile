@@ -50,6 +50,7 @@ COPY api api
 COPY core core
 COPY protos protos
 COPY utils utils
+COPY static static
 
 # Template substitution: Replace @model@ with the proper model name
 RUN sed s/@model@/${model}/ config.py.in > config.py

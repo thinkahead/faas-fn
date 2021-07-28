@@ -23,4 +23,5 @@ if __name__ == '__main__':
     max_app.add_api(ModelMetadataAPI, '/metadata')
     max_app.add_api(ModelLabelsAPI, '/labels')
     max_app.add_api(ModelPredictAPI, '/predict')
+    max_app.mount_static('/app/')
     max_app.run(port=5000)
