@@ -8,8 +8,8 @@
 - **prometheus** image: prom/prometheus-linux-ppc64le    
 - **queue-worker** image: image-registry.openshift-image-registry.svc:5000/openfaas/nats-queue-worker:latest-dev    
 
-## Dockerfile for nats-streaming-server using in next section
-Use the following docker/Dockerfile and docker/docker-entrypoint.sh https://github.com/nats-io/nats-streaming-docker/blob/master/0.22.0/alpine3.13/docker-entrypoint.sh
+## Dockerfile and docker-entrypoint for nats-streaming-server used in next section
+docker/Dockerfile
 ```
 FROM --platform=${BUILDPLATFORM:-linux/ppc64le} golang:1.16-alpine AS builder
 
@@ -37,6 +37,22 @@ COPY docker-entrypoint.sh /usr/local/bin
 EXPOSE 4222 8222
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["nats-streaming-server", "-m", "8222"]
+```
+docker/docker-entrypoint.sh
+https://github.com/nats-io/nats-streaming-docker/blob/main/0.22.1/alpine3.14/docker-entrypoint.sh
+```
+#!/bin/sh
+set -e
+
+# this if will check if the first argument is a flag
+# but only works if all arguments require a hyphenated flag
+# -v; -SL; -f arg; etc will work, but not arg1 arg2
+if [ "$#" -eq 0 ] || [ "${1#-}" != "$1" ]; then
+    set -- nats-streaming-server "$@"
+fi
+
+# else default to run whatever the user wanted like "bash" or "sh"
+exec "$@"
 ```
 
 ## Building images for ppc64le
